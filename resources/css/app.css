@@ -1,0 +1,30 @@
+@import 'fonts.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --color-selina: 51, 153, 102;
+        --color-wamucii: 14, 86, 65;
+    }
+}
+
+/* Custom styles for form elements */
+[type='text'],
+[type='email'],
+[type='url'],
+[type='password'],
+[type='number'],
+[type='date'],
+[type='datetime-local'],
+[type='month'],
+[type='search'],
+[type='tel'],
+[type='time'],
+[type='week'],
+[multiple],
+textarea,
+select {
+    @apply font-futura border-gray-300 focus:border-selina focus:ring-selina rounded-md shadow-sm;
+}
