@@ -17,5 +17,11 @@
         "tailwindcss": "^3.2.1",
         "vite": "^5.0",
         "vue": "^3.4.0"
+    },
+    "dependencies": {
+        "@heroicons/vue": "^2.2.0",
+        "@vueform/multiselect": "^2.6.11",
+        "laravel-echo": "^1.17.1",
+        "pusher-js": "^8.4.0-rc2"
     }
 }

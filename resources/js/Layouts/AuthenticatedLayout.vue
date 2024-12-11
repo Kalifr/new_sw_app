@@ -39,6 +39,24 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    :href="route('products.index')"
+                                    :active="route().current('products.index')"
+                                >
+                                    Products
+                                </NavLink>
+                                <NavLink
+                                    :href="route('rfqs.index')"
+                                    :active="route().current().startsWith('rfqs.')"
+                                >
+                                    RFQs
+                                </NavLink>
+                                <NavLink
+                                    :href="route('messages.index')"
+                                    :active="route().current().startsWith('messages.')"
+                                >
+                                    Messages
+                                </NavLink>
                             </div>
                         </div>
 
@@ -145,6 +163,24 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('products.index')"
+                            :active="route().current('products.index')"
+                        >
+                            Products
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('rfqs.index')"
+                            :active="route().current().startsWith('rfqs.')"
+                        >
+                            RFQs
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('messages.index')"
+                            :active="route().current().startsWith('messages.')"
+                        >
+                            Messages
                         </ResponsiveNavLink>
                     </div>
 

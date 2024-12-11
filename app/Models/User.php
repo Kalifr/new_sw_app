@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Rfq;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'profile_completed',
     ];
 
     /**
@@ -38,12 +43,52 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'profile_completed' => 'boolean',
+    ];
+
+    public function products(): HasMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Product::class);
+    }
+
+    public function rfqs(): HasMany
+    {
+        return $this->hasMany(Rfq::class, 'buyer_id');
+    }
+
+    public function messageThreads(): BelongsToMany
+    {
+        return $this->belongsToMany(MessageThread::class, 'message_participants', 'user_id', 'thread_id')
+            ->withPivot('last_read_at')
+            ->withTimestamps()
+            ->orderByDesc(function ($query) {
+                $query->select('created_at')
+                    ->from('messages')
+                    ->whereColumn('thread_id', 'message_threads.id')
+                    ->latest()
+                    ->limit(1);
+            });
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function unreadMessages()
+    {
+        return Message::whereHas('thread.participants', function ($query) {
+            $query->where('user_id', $this->id);
+        })->whereDoesntHave('status', function ($query) {
+            $query->where('user_id', $this->id)
+                ->where(function ($q) {
+                    $q->where('read', true)
+                        ->orWhere('email_sent', true);
+                });
+        });
     }
 
     public function profile(): HasOne
@@ -53,6 +98,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasCompletedProfile(): bool
     {
-        return $this->profile()->exists() && $this->profile->profile_completed;
+        return $this->profile()->exists() && 
+               $this->profile->organization_name &&
+               $this->profile->organization_type &&
+               $this->profile->country &&
+               $this->profile->phone &&
+               $this->profile->looking_for &&
+               $this->profile->categories;
     }
 }
