@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Jobs\SendEngagementReminders;
+use App\Jobs\SendUnreadMessageNotifications;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -17,10 +19,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
-
         // Send notifications for unread messages every minute
         $schedule->job(new SendUnreadMessageNotifications)->everyMinute();
+
+        // Send engagement reminders daily at 10 AM
+        $schedule->job(new SendEngagementReminders)->dailyAt('10:00');
+
+        // Clean up old notifications weekly
+        $schedule->command('notifications:clean')->weekly();
     }
 
     /**
