@@ -12,6 +12,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InspectionController;
 use App\Http\Controllers\UserAnalyticsController;
+use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\SupportTicketResponseController;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -105,6 +107,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/inspections/{inspection}', [InspectionController::class, 'update'])->name('inspections.update');
         Route::post('/inspections/{inspection}/complete', [InspectionController::class, 'complete'])->name('inspections.complete');
         Route::get('/inspections/{inspection}/photos/{photo}', [InspectionController::class, 'downloadPhoto'])->name('inspections.photo.download');
+
+        // Support Ticket Routes
+        Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
+        Route::get('/support/create', [SupportTicketController::class, 'create'])->name('support.create');
+        Route::post('/support', [SupportTicketController::class, 'store'])->name('support.store');
+        Route::get('/support/{ticket}', [SupportTicketController::class, 'show'])->name('support.show');
+        Route::put('/support/{ticket}', [SupportTicketController::class, 'update'])->name('support.update');
+        Route::post('/support/{ticket}/close', [SupportTicketController::class, 'close'])->name('support.close');
+        Route::post('/support/{ticket}/reopen', [SupportTicketController::class, 'reopen'])->name('support.reopen');
+
+        // Support Ticket Responses
+        Route::post('/support/{ticket}/responses', [SupportTicketResponseController::class, 'store'])->name('support.responses.store');
+        Route::put('/support/{ticket}/responses/{response}', [SupportTicketResponseController::class, 'update'])->name('support.responses.update');
+        Route::delete('/support/{ticket}/responses/{response}', [SupportTicketResponseController::class, 'destroy'])->name('support.responses.destroy');
+        Route::get('/support/{ticket}/responses/{response}/attachments/{attachment}', [SupportTicketResponseController::class, 'downloadAttachment'])->name('support.responses.attachments.download');
+        Route::delete('/support/{ticket}/responses/{response}/attachments/{attachment}', [SupportTicketResponseController::class, 'deleteAttachment'])->name('support.responses.attachments.destroy');
     });
 
     // Admin routes
