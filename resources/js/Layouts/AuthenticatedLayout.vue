@@ -1,13 +1,67 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import debounce from 'lodash/debounce';
+
+defineProps({
+    auth: Object,
+});
 
 const showingNavigationDropdown = ref(false);
+const searchQuery = ref('');
+const suggestions = ref([]);
+const showSuggestions = ref(false);
+
+const handleInput = debounce(async () => {
+    if (searchQuery.value.length < 2) {
+        suggestions.value = [];
+        showSuggestions.value = false;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(searchQuery.value)}`);
+        suggestions.value = await response.json();
+        showSuggestions.value = true;
+    } catch (error) {
+        console.error('Error fetching suggestions:', error);
+    }
+}, 300);
+
+const selectSuggestion = (suggestion) => {
+    searchQuery.value = suggestion.name;
+    showSuggestions.value = false;
+    router.visit(suggestion.url);
+};
+
+const performSearch = () => {
+    if (searchQuery.value.trim()) {
+        router.visit(`/search?query=${encodeURIComponent(searchQuery.value.trim())}`);
+    }
+};
+
+// Close suggestions when clicking outside
+const handleClickOutside = (event) => {
+    if (!event.target.closest('.search-container')) {
+        showSuggestions.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
+
+// Watch for changes in search query
+watch(searchQuery, handleInput);
 </script>
 
 <template>
@@ -27,6 +81,42 @@ const showingNavigationDropdown = ref(false);
                                         class="block h-9 w-auto fill-current text-gray-800"
                                     />
                                 </Link>
+                            </div>
+
+                            <!-- Search Box -->
+                            <div class="relative flex-1 px-4">
+                                <form @submit.prevent="performSearch" class="relative">
+                                    <input
+                                        v-model="searchQuery"
+                                        type="text"
+                                        class="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:bg-white focus:ring-1 focus:ring-selina"
+                                        placeholder="Search products..."
+                                        @focus="showSuggestions = true"
+                                    >
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </form>
+
+                                <!-- Search Suggestions -->
+                                <div v-if="showSuggestions && suggestions.length > 0" 
+                                    class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                                    <div v-for="suggestion in suggestions" 
+                                        :key="suggestion.id" 
+                                        class="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
+                                        @click="selectSuggestion(suggestion)">
+                                        <img v-if="suggestion.image" 
+                                            :src="suggestion.image" 
+                                            class="w-12 h-12 object-cover rounded"
+                                            :alt="suggestion.name">
+                                        <div class="ml-3">
+                                            <div class="font-medium">{{ suggestion.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ suggestion.category }}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Navigation Links -->

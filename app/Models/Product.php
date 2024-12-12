@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Searchable;
 
     protected $fillable = [
         'name',
@@ -37,6 +38,12 @@ class Product extends Model
         'sample_available',
         'available_months',
         'status',
+        'search_vector',
+        'search_metadata',
+        'price_min',
+        'price_max',
+        'available_locations',
+        'search_categories'
     ];
 
     protected $casts = [
@@ -51,6 +58,9 @@ class Product extends Model
         'price' => 'decimal:2',
         'minimum_order' => 'decimal:2',
         'quantity_available' => 'decimal:2',
+        'search_metadata' => 'array',
+        'available_locations' => 'array',
+        'search_categories' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -73,5 +83,35 @@ class Product extends Model
         return $this->hasMany(ProductImage::class)
             ->where('type', 'gallery')
             ->orderBy('order');
+    }
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'variety' => $this->variety,
+            'grade' => $this->grade,
+            'growing_method' => $this->growing_method,
+            'price' => $this->price,
+            'price_unit' => $this->price_unit,
+            'country_of_origin' => $this->country_of_origin,
+            'region' => $this->region,
+            'certifications' => $this->certifications,
+            'processing_level' => $this->processing_level,
+            'search_vector' => $this->search_vector,
+            'search_metadata' => $this->search_metadata,
+            'price_min' => $this->price_min,
+            'price_max' => $this->price_max,
+            'available_locations' => $this->available_locations,
+            'search_categories' => $this->search_categories,
+            'status' => $this->status,
+        ];
+    }
+
+    public function shouldBeSearchable(): bool
+    {
+        return $this->status === 'published';
     }
 } 

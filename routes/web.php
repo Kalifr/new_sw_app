@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileCompletionController;
 use App\Http\Controllers\RfqController;
 use App\Http\Controllers\RfqQuoteController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SearchController;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/messages/threads/{thread}', [MessageController::class, 'store'])->name('messages.store');
         Route::post('/messages/email-reply', [MessageController::class, 'processEmailReply'])->name('messages.email-reply');
         Route::post('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.mark-read');
+
+        // Search Routes
+        Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+        Route::get('/search/results', [SearchController::class, 'search'])->name('search.results');
+        Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
+        Route::get('/api/search/suggestions', [SearchController::class, 'suggestions'])->name('api.search.suggestions');
+        Route::post('/search/create-rfq', [SearchController::class, 'createRfqFromSearch'])->name('search.create-rfq');
     });
 });
 
