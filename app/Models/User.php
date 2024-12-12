@@ -121,17 +121,19 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function assignRole(string $role, array $metadata = []): void
     {
-        $role = Role::findByName($role) ?? Role::create(['name' => $role]);
+        $roleModel = Role::firstOrCreate(['name' => $role]);
         
-        if (!$this->hasRole($role->name)) {
-            $this->roles()->attach($role->id, ['metadata' => $metadata]);
+        if (!$this->hasRole($role)) {
+            $this->roles()->attach($roleModel->id, ['metadata' => $metadata]);
         }
     }
 
     public function removeRole(string $role): void
     {
-        if ($role = Role::findByName($role)) {
-            $this->roles()->detach($role->id);
+        $roleModel = Role::where('name', $role)->first();
+        
+        if ($roleModel) {
+            $this->roles()->detach($roleModel->id);
         }
     }
 
@@ -142,7 +144,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return $this->hasRole(Role::ADMIN);
+        return $this->hasRole('admin');
     }
 
     public function isBuyer(): bool

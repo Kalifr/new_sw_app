@@ -22,6 +22,7 @@
         "@headlessui/vue": "^1.7.23",
         "@heroicons/vue": "^2.2.0",
         "@vueform/multiselect": "^2.6.11",
+        "chart.js": "^4.4.7",
         "laravel-echo": "^1.17.1",
         "pusher-js": "^8.4.0-rc2"
     }

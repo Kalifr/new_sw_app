@@ -156,6 +156,9 @@ watch(searchQuery, handleInput);
                                 >
                                     Inspections
                                 </NavLink>
+                                <NavLink :href="route('analytics.user')" :active="route().current('analytics.user')">
+                                    Analytics
+                                </NavLink>
                             </div>
                         </div>
 
@@ -289,6 +292,9 @@ watch(searchQuery, handleInput);
                             :active="route().current('inspections.*')"
                         >
                             Inspections
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('analytics.user')" :active="route().current('analytics.user')">
+                            Analytics
                         </ResponsiveNavLink>
                     </div>
 

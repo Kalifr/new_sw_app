@@ -25,7 +25,13 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
+    optimizeDeps: {
+        include: ['chart.js'],
+    },
     build: {
         assetsInlineLimit: 0,
+        rollupOptions: {
+            external: ['chart.js'],
+        },
     },
 });

@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\InspectionController;
+use App\Http\Controllers\UserAnalyticsController;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -105,6 +106,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/inspections/{inspection}/complete', [InspectionController::class, 'complete'])->name('inspections.complete');
         Route::get('/inspections/{inspection}/photos/{photo}', [InspectionController::class, 'downloadPhoto'])->name('inspections.photo.download');
     });
+
+    // Admin routes
+    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/dashboard/export', [App\Http\Controllers\Admin\DashboardController::class, 'export'])->name('dashboard.export');
+    });
+
+    // User Analytics
+    Route::get('/analytics', [UserAnalyticsController::class, 'index'])
+        ->middleware(['auth', 'verified'])
+        ->name('analytics.user');
 });
 
 require __DIR__.'/auth.php';

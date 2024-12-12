@@ -27,6 +27,12 @@ class Kernel extends ConsoleKernel
 
         // Clean up old notifications weekly
         $schedule->command('notifications:clean')->weekly();
+
+        // Generate analytics daily at midnight
+        $schedule->command('analytics:generate')->dailyAt('00:00');
+
+        // Clean up old exports weekly
+        $schedule->exec('find storage/app/exports -type f -mtime +7 -delete')->weekly();
     }
 
     /**
