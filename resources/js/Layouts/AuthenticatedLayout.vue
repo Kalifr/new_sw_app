@@ -147,6 +147,15 @@ watch(searchQuery, handleInput);
                                 >
                                     Messages
                                 </NavLink>
+                                <NavLink :href="route('orders.index')" :active="route().current('orders.*')">
+                                    Orders
+                                </NavLink>
+                                <NavLink v-if="$page.props.auth.user.roles?.includes('inspector')"
+                                    :href="route('inspections.index')"
+                                    :active="route().current('inspections.*')"
+                                >
+                                    Inspections
+                                </NavLink>
                             </div>
                         </div>
 
@@ -271,6 +280,15 @@ watch(searchQuery, handleInput);
                             :active="route().current().startsWith('messages.')"
                         >
                             Messages
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('orders.index')" :active="route().current('orders.*')">
+                            Orders
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth.user.roles?.includes('inspector')"
+                            :href="route('inspections.index')"
+                            :active="route().current('inspections.*')"
+                        >
+                            Inspections
                         </ResponsiveNavLink>
                     </div>
 

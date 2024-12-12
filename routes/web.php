@@ -7,6 +7,10 @@ use App\Http\Controllers\RfqController;
 use App\Http\Controllers\RfqQuoteController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\InspectionController;
 use App\Http\Middleware\EnsureProfileIsComplete;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +78,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
         Route::get('/api/search/suggestions', [SearchController::class, 'suggestions'])->name('api.search.suggestions');
         Route::post('/search/create-rfq', [SearchController::class, 'createRfqFromSearch'])->name('search.create-rfq');
+
+        // Order Management Routes
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        
+        // Payment Routes
+        Route::post('/orders/{order}/payments', [PaymentController::class, 'store'])->name('orders.payments.store');
+        Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
+        Route::post('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('payments.reject');
+        Route::get('/payments/{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('payments.receipt.download');
+        
+        // Document Routes
+        Route::post('/orders/{order}/documents', [DocumentController::class, 'upload'])->name('orders.documents.store');
+        Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+        Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+        Route::post('/documents/{document}/sign', [DocumentController::class, 'sign'])->name('documents.sign');
+        Route::get('/documents/{document}/verify-signature/{signature}', [DocumentController::class, 'verifySignature'])->name('documents.verify-signature');
+        
+        // Inspection Routes
+        Route::get('/inspections', [InspectionController::class, 'index'])->name('inspections.index');
+        Route::get('/inspections/{inspection}', [InspectionController::class, 'show'])->name('inspections.show');
+        Route::post('/orders/{order}/inspections', [InspectionController::class, 'store'])->name('orders.inspections.store');
+        Route::put('/inspections/{inspection}', [InspectionController::class, 'update'])->name('inspections.update');
+        Route::post('/inspections/{inspection}/complete', [InspectionController::class, 'complete'])->name('inspections.complete');
+        Route::get('/inspections/{inspection}/photos/{photo}', [InspectionController::class, 'downloadPhoto'])->name('inspections.photo.download');
     });
 });
 

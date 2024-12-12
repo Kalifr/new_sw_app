@@ -106,4 +106,62 @@ class User extends Authenticatable implements MustVerifyEmail
                $this->profile->looking_for &&
                $this->profile->categories;
     }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')
+            ->withPivot('metadata')
+            ->withTimestamps();
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->roles()->where('name', $role)->exists();
+    }
+
+    public function assignRole(string $role, array $metadata = []): void
+    {
+        $role = Role::findByName($role) ?? Role::create(['name' => $role]);
+        
+        if (!$this->hasRole($role->name)) {
+            $this->roles()->attach($role->id, ['metadata' => $metadata]);
+        }
+    }
+
+    public function removeRole(string $role): void
+    {
+        if ($role = Role::findByName($role)) {
+            $this->roles()->detach($role->id);
+        }
+    }
+
+    public function isInspector(): bool
+    {
+        return $this->hasRole(Role::INSPECTOR);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(Role::ADMIN);
+    }
+
+    public function isBuyer(): bool
+    {
+        return $this->hasRole(Role::BUYER);
+    }
+
+    public function isSeller(): bool
+    {
+        return $this->hasRole(Role::SELLER);
+    }
+
+    public function canInspect(Order $order): bool
+    {
+        if (!$this->isInspector()) {
+            return false;
+        }
+
+        $inspectionRegions = $this->profile->inspection_regions ?? [];
+        return in_array($order->shipping_details['origin_region'] ?? null, $inspectionRegions);
+    }
 }
