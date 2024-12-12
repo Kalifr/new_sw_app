@@ -1,50 +1,30 @@
 <template>
     <Head>
-        <title>{{ meta?.title || 'Browse Products' }}</title>
-        <meta name="description" :content="meta?.description || 'Browse our products'">
-        <meta name="keywords" :content="meta?.keywords || 'products, marketplace'">
+        <title>{{ meta.title }}</title>
+        <meta name="description" :content="meta.description">
+        <meta name="keywords" :content="meta.keywords">
     </Head>
 
     <PublicLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Browse Products
+                {{ category.name }} Products from {{ country.name }}
             </h2>
         </template>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <!-- Categories Section -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-8">
-                    <div class="p-6">
-                        <h2 class="text-2xl font-bold mb-6">Product Categories</h2>
-                        <div v-if="categories && categories.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Link 
-                                v-for="category in categories" 
-                                :key="category.id"
-                                :href="route('products.listing.category', category.slug)"
-                                class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                            >
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900">{{ category.name }}</h3>
-                                    <p class="text-sm text-gray-600">{{ category.products_count || 0 }} products</p>
-                                </div>
-                            </Link>
-                        </div>
-                        <div v-else class="text-center py-8 text-gray-500">
-                            No categories available yet.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Featured Products Section -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h2 class="text-2xl font-bold mb-6">Featured Products</h2>
-                        <div v-if="featuredProducts && featuredProducts.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            <div v-for="product in featuredProducts" :key="product.id" 
+                        <div v-if="products.data.length === 0" class="text-center py-12">
+                            <h3 class="text-lg font-medium text-gray-900">No products found</h3>
+                            <p class="mt-1 text-sm text-gray-500">There are currently no products in this category from {{ country.name }}.</p>
+                        </div>
+
+                        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div v-for="product in products.data" :key="product.id" 
                                 class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                                <Link :href="route('products.listing.detail', [product.category?.slug || 'uncategorized', product.country?.slug || 'unknown', product.slug])"
+                                <Link :href="route('products.listing.detail', [category.slug, country.slug, product.slug])"
                                     class="block">
                                     <div class="aspect-w-16 aspect-h-9">
                                         <img v-if="product.images && product.images.length" 
@@ -57,7 +37,6 @@
                                     </div>
                                     <div class="p-4">
                                         <h3 class="text-lg font-semibold mb-2 text-gray-900">{{ product.name }}</h3>
-                                        <p class="text-gray-600 text-sm mb-2">{{ product.country?.name || 'Unknown location' }}</p>
                                         <p v-if="product.price" class="text-gray-800 font-bold">
                                             ${{ product.price.toLocaleString() }}
                                         </p>
@@ -78,8 +57,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-gray-500">
-                            No featured products available yet.
+
+                        <!-- Pagination -->
+                        <div v-if="products.data.length > 0" class="mt-8">
+                            <Pagination :links="products.links" />
                         </div>
                     </div>
                 </div>
@@ -91,23 +72,12 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 defineProps({
-    categories: {
-        type: Array,
-        default: () => [],
-    },
-    featuredProducts: {
-        type: Array,
-        default: () => [],
-    },
-    meta: {
-        type: Object,
-        default: () => ({
-            title: 'Browse Products',
-            description: 'Browse our products',
-            keywords: 'products, marketplace',
-        }),
-    },
+    products: Object,
+    category: Object,
+    country: Object,
+    meta: Object,
 });
 </script> 
