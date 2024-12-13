@@ -17,7 +17,7 @@
                             <p class="mt-1 text-sm text-gray-500">Browse products to send RFQs to sellers.</p>
                             <div class="mt-6">
                                 <Link
-                                    :href="route('products.index')"
+                                    :href="route('products.listing.index')"
                                     class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-selina hover:bg-wamucii focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-selina"
                                 >
                                     Browse Products

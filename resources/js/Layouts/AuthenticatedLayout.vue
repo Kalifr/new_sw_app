@@ -130,10 +130,16 @@ watch(searchQuery, handleInput);
                                     Dashboard
                                 </NavLink>
                                 <NavLink
-                                    :href="route('products.index')"
-                                    :active="route().current('products.index')"
+                                    :href="route('products.listing.index')"
+                                    :active="route().current('products.listing.*')"
                                 >
-                                    Products
+                                    Browse Products
+                                </NavLink>
+                                <NavLink v-if="$page.props.auth.user.roles?.includes('admin')"
+                                    :href="route('admin.products.index')"
+                                    :active="route().current('admin.products.*')"
+                                >
+                                    Manage Products
                                 </NavLink>
                                 <NavLink
                                     :href="route('rfqs.index')"
@@ -270,10 +276,16 @@ watch(searchQuery, handleInput);
                             Dashboard
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            :href="route('products.index')"
-                            :active="route().current('products.index')"
+                            :href="route('products.listing.index')"
+                            :active="route().current('products.listing.*')"
                         >
-                            Products
+                            Browse Products
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink v-if="$page.props.auth.user.roles?.includes('admin')"
+                            :href="route('admin.products.index')"
+                            :active="route().current('admin.products.*')"
+                        >
+                            Manage Products
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('rfqs.index')"

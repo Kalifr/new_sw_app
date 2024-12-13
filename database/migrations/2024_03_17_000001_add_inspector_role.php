@@ -24,27 +24,10 @@ return new class extends Migration
 
             $table->unique(['user_id', 'role_id']);
         });
-
-        // Add inspector-specific fields to user profiles
-        Schema::table('user_profiles', function (Blueprint $table) {
-            $table->string('employee_id')->nullable()->unique();
-            $table->json('inspection_regions')->nullable();
-            $table->json('certifications')->nullable();
-            $table->boolean('is_active_inspector')->default(false);
-        });
     }
 
     public function down(): void
     {
-        Schema::table('user_profiles', function (Blueprint $table) {
-            $table->dropColumn([
-                'employee_id',
-                'inspection_regions',
-                'certifications',
-                'is_active_inspector'
-            ]);
-        });
-
         Schema::dropIfExists('user_roles');
         Schema::dropIfExists('roles');
     }

@@ -124,7 +124,7 @@ class User extends Authenticatable implements MustVerifyEmail
         $roleModel = Role::firstOrCreate(['name' => $role]);
         
         if (!$this->hasRole($role)) {
-            $this->roles()->attach($roleModel->id, ['metadata' => $metadata]);
+            $this->roles()->attach($roleModel->id, ['metadata' => json_encode($metadata)]);
         }
     }
 

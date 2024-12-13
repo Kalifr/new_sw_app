@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,19 +13,18 @@ class ProductController extends Controller
 {
     public function index(): Response
     {
-        $products = auth()->user()->products()
-            ->with('mainImage')
+        $products = Product::with(['mainImage', 'category'])
             ->latest()
             ->paginate(10);
 
-        return Inertia::render('Products/Index', [
+        return Inertia::render('Admin/Products/Index', [
             'products' => $products
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('Products/Create', [
+        return Inertia::render('Admin/Products/Create', [
             'units' => [
                 'weight' => ['kg', 'tonne', 'lb'],
                 'volume' => ['l', 'ml', 'gal'],
@@ -77,7 +77,7 @@ class ProductController extends Controller
             'country_of_origin' => 'required|string',
             'region' => 'nullable|string',
             'harvest_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after:harvest_date',
             'storage_conditions' => 'nullable|string',
             'packaging_details' => 'nullable|string',
             'certifications' => 'nullable|array',
@@ -87,12 +87,13 @@ class ProductController extends Controller
             'sample_available' => 'boolean',
             'available_months' => 'required|array',
             'images' => 'required|array|min:1',
-            'images.*.file' => 'required|image|max:5120', // 5MB max
+            'images.*.file' => 'required|image|max:5120',
             'images.*.type' => 'required|in:main,gallery',
             'images.*.order' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
         ]);
 
-        $product = auth()->user()->products()->create([
+        $product = Product::create([
             ...$validated,
             'status' => 'draft'
         ]);
@@ -106,15 +107,13 @@ class ProductController extends Controller
             ]);
         }
 
-        return redirect()->route('products.listing.index')
+        return redirect()->route('admin.products.index')
             ->with('success', 'Product created successfully.');
     }
 
     public function edit(Product $product): Response
     {
-        $this->authorize('update', $product);
-
-        return Inertia::render('Products/Edit', [
+        return Inertia::render('Admin/Products/Edit', [
             'product' => $product->load('images'),
             'units' => [
                 'weight' => ['kg', 'tonne', 'lb'],
@@ -153,8 +152,6 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $this->authorize('update', $product);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -170,7 +167,7 @@ class ProductController extends Controller
             'country_of_origin' => 'required|string',
             'region' => 'nullable|string',
             'harvest_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after:harvest_date',
             'storage_conditions' => 'nullable|string',
             'packaging_details' => 'nullable|string',
             'certifications' => 'nullable|array',
@@ -179,29 +176,13 @@ class ProductController extends Controller
             'delivery_terms' => 'nullable|array',
             'sample_available' => 'boolean',
             'available_months' => 'required|array',
-            'status' => 'required|in:draft,published,sold,expired',
-            'new_images' => 'nullable|array',
-            'new_images.*.file' => 'required|image|max:5120', // 5MB max
-            'new_images.*.type' => 'required|in:main,gallery',
-            'new_images.*.order' => 'required|integer|min:0',
-            'deleted_images' => 'nullable|array',
-            'deleted_images.*' => 'exists:product_images,id'
+            'category_id' => 'required|exists:categories,id',
         ]);
 
         $product->update($validated);
 
-        // Handle deleted images
-        if ($request->has('deleted_images')) {
-            $deletedImages = $product->images()->whereIn('id', $request->deleted_images)->get();
-            foreach ($deletedImages as $image) {
-                Storage::disk('public')->delete($image->path);
-            }
-            $product->images()->whereIn('id', $request->deleted_images)->delete();
-        }
-
-        // Handle new images
-        if ($request->hasFile('new_images')) {
-            foreach ($request->file('new_images') as $image) {
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
                 $path = $image['file']->store('products', 'public');
                 $product->images()->create([
                     'path' => $path,
@@ -211,16 +192,15 @@ class ProductController extends Controller
             }
         }
 
-        return back()->with('success', 'Product updated successfully.');
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product)
     {
-        $this->authorize('delete', $product);
-
-        // Delete images from storage
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->path);
+            $image->delete();
         }
 
         $product->delete();
@@ -231,8 +211,6 @@ class ProductController extends Controller
 
     public function publish(Product $product)
     {
-        $this->authorize('update', $product);
-
         $product->update(['status' => 'published']);
 
         return back()->with('success', 'Product published successfully.');

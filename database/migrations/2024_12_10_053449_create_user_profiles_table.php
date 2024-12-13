@@ -21,6 +21,10 @@ return new class extends Migration
             $table->text('looking_for')->nullable();
             $table->json('categories');
             $table->boolean('profile_completed')->default(false);
+            $table->string('employee_id')->nullable()->unique();
+            $table->json('inspection_regions')->nullable();
+            $table->json('certifications')->nullable();
+            $table->boolean('is_active_inspector')->default(false);
             $table->timestamps();
         });
     }

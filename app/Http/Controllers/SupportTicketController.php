@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SupportTicket;
 use App\Models\SupportCategory;
 use App\Models\SupportFaq;
+use App\Models\User;
 use App\Notifications\NewSupportTicketNotification;
 use App\Notifications\SupportTicketUpdatedNotification;
 use Illuminate\Http\Request;
@@ -196,5 +197,29 @@ class SupportTicketController extends Controller
         $ticket->update(['status' => 'open']);
 
         return back()->with('success', 'Support ticket reopened successfully.');
+    }
+
+    public function faq()
+    {
+        $faqs = SupportFaq::with('category')
+            ->published()
+            ->orderBy('helpful_count', 'desc')
+            ->get()
+            ->groupBy('category.name');
+
+        $categories = SupportCategory::active()
+            ->ordered()
+            ->get();
+
+        return Inertia::render('Support/Faq', [
+            'faqs' => $faqs,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function markFaqHelpful(SupportFaq $faq)
+    {
+        $faq->incrementHelpfulCount();
+        return response()->json(['success' => true]);
     }
 } 
