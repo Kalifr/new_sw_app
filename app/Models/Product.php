@@ -43,7 +43,8 @@ class Product extends Model
         'price_min',
         'price_max',
         'available_locations',
-        'search_categories'
+        'search_categories',
+        'category_id'
     ];
 
     protected $casts = [
@@ -113,5 +114,15 @@ class Product extends Model
     public function shouldBeSearchable(): bool
     {
         return $this->status === 'published';
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_of_origin', 'id');
     }
 } 

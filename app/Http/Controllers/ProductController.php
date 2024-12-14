@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -25,6 +27,7 @@ class ProductController extends Controller
     public function create(): Response
     {
         return Inertia::render('Products/Create', [
+            'categories' => Category::select('id', 'name')->get(),
             'units' => [
                 'weight' => ['kg', 'tonne', 'lb'],
                 'volume' => ['l', 'ml', 'gal'],
@@ -56,41 +59,14 @@ class ProductController extends Controller
                 'EXW',
                 'DAP',
                 'DDP'
-            ]
+            ],
+            'countries' => Country::select('id', 'country_name as name')->orderBy('country_name')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'variety' => 'nullable|string|max:255',
-            'grade' => 'nullable|string|max:255',
-            'growing_method' => 'nullable|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'price_unit' => 'required|string',
-            'minimum_order' => 'required|numeric|min:0',
-            'minimum_order_unit' => 'required|string',
-            'quantity_available' => 'required|numeric|min:0',
-            'quantity_unit' => 'required|string',
-            'country_of_origin' => 'required|string',
-            'region' => 'nullable|string',
-            'harvest_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
-            'storage_conditions' => 'nullable|string',
-            'packaging_details' => 'nullable|string',
-            'certifications' => 'nullable|array',
-            'processing_level' => 'nullable|array',
-            'payment_terms' => 'nullable|array',
-            'delivery_terms' => 'nullable|array',
-            'sample_available' => 'boolean',
-            'available_months' => 'required|array',
-            'images' => 'required|array|min:1',
-            'images.*.file' => 'required|image|max:5120', // 5MB max
-            'images.*.type' => 'required|in:main,gallery',
-            'images.*.order' => 'required|integer|min:0',
-        ]);
+        $validated = $this->validateProduct($request);
 
         $product = auth()->user()->products()->create([
             ...$validated,
@@ -115,7 +91,7 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         return Inertia::render('Products/Edit', [
-            'product' => $product->load('images'),
+            'product' => $product->load('images', 'country'),
             'units' => [
                 'weight' => ['kg', 'tonne', 'lb'],
                 'volume' => ['l', 'ml', 'gal'],
@@ -147,7 +123,8 @@ class ProductController extends Controller
                 'EXW',
                 'DAP',
                 'DDP'
-            ]
+            ],
+            'countries' => Country::select('id', 'country_name as name')->orderBy('country_name')->get(),
         ]);
     }
 
@@ -155,38 +132,7 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'variety' => 'nullable|string|max:255',
-            'grade' => 'nullable|string|max:255',
-            'growing_method' => 'nullable|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'price_unit' => 'required|string',
-            'minimum_order' => 'required|numeric|min:0',
-            'minimum_order_unit' => 'required|string',
-            'quantity_available' => 'required|numeric|min:0',
-            'quantity_unit' => 'required|string',
-            'country_of_origin' => 'required|string',
-            'region' => 'nullable|string',
-            'harvest_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
-            'storage_conditions' => 'nullable|string',
-            'packaging_details' => 'nullable|string',
-            'certifications' => 'nullable|array',
-            'processing_level' => 'nullable|array',
-            'payment_terms' => 'nullable|array',
-            'delivery_terms' => 'nullable|array',
-            'sample_available' => 'boolean',
-            'available_months' => 'required|array',
-            'status' => 'required|in:draft,published,sold,expired',
-            'new_images' => 'nullable|array',
-            'new_images.*.file' => 'required|image|max:5120', // 5MB max
-            'new_images.*.type' => 'required|in:main,gallery',
-            'new_images.*.order' => 'required|integer|min:0',
-            'deleted_images' => 'nullable|array',
-            'deleted_images.*' => 'exists:product_images,id'
-        ]);
+        $validated = $this->validateProduct($request);
 
         $product->update($validated);
 
@@ -236,5 +182,42 @@ class ProductController extends Controller
         $product->update(['status' => 'published']);
 
         return back()->with('success', 'Product published successfully.');
+    }
+
+    protected function validateProduct(Request $request)
+    {
+        return $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'variety' => 'nullable|string|max:255',
+            'grade' => 'nullable|string|max:255',
+            'growing_method' => 'nullable|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'price_unit' => 'required|string',
+            'minimum_order' => 'required|numeric|min:0',
+            'minimum_order_unit' => 'required|string',
+            'quantity_available' => 'required|numeric|min:0',
+            'quantity_unit' => 'required|string',
+            'country_of_origin' => 'required|exists:countries,id',
+            'region' => 'nullable|string',
+            'harvest_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date',
+            'storage_conditions' => 'nullable|string',
+            'packaging_details' => 'nullable|string',
+            'certifications' => 'nullable|array',
+            'processing_level' => 'nullable|array',
+            'payment_terms' => 'nullable|array',
+            'delivery_terms' => 'nullable|array',
+            'sample_available' => 'boolean',
+            'available_months' => 'required|array',
+            'status' => 'required|in:draft,published,sold,expired',
+            'new_images' => 'nullable|array',
+            'new_images.*.file' => 'required|image|max:5120', // 5MB max
+            'new_images.*.type' => 'required|in:main,gallery',
+            'new_images.*.order' => 'required|integer|min:0',
+            'deleted_images' => 'nullable|array',
+            'deleted_images.*' => 'exists:product_images,id'
+        ]);
     }
 } 

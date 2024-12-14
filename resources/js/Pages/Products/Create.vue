@@ -34,6 +34,36 @@
                                     <InputError :message="form.errors.name" class="mt-2" />
                                 </div>
 
+                                <div class="sm:col-span-4">
+                                    <InputLabel for="category" value="Category" />
+                                    <div class="mt-1">
+                                        <Combobox v-model="form.category_id">
+                                            <div class="relative mt-1">
+                                                <ComboboxInput
+                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                    :displayValue="(id) => props.categories.find(c => c.id === id)?.name"
+                                                    @change="query = $event.target.value"
+                                                    placeholder="Select a category"
+                                                    required
+                                                />
+                                                <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                                    <ComboboxOption
+                                                        v-for="category in filteredCategories"
+                                                        :key="category.id"
+                                                        :value="category.id"
+                                                        v-slot="{ selected, active }"
+                                                    >
+                                                        <div :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-indigo-600 text-white' : 'text-gray-900']">
+                                                            <span :class="['block truncate', selected && 'font-semibold']">{{ category.name }}</span>
+                                                        </div>
+                                                    </ComboboxOption>
+                                                </ComboboxOptions>
+                                            </div>
+                                        </Combobox>
+                                    </div>
+                                    <InputError :message="form.errors.category_id" class="mt-2" />
+                                </div>
+
                                 <div class="sm:col-span-6">
                                     <InputLabel for="description" value="Description" />
                                     <textarea
@@ -200,13 +230,33 @@
                             <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                                 <div class="sm:col-span-3">
                                     <InputLabel for="country_of_origin" value="Country of Origin" />
-                                    <TextInput
-                                        id="country_of_origin"
-                                        v-model="form.country_of_origin"
-                                        type="text"
-                                        class="mt-1 block w-full"
-                                        required
-                                    />
+                                    <div class="relative mt-2">
+                                        <Combobox v-model="form.country_of_origin">
+                                            <ComboboxInput
+                                                class="w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                :displayValue="(id) => props.countries.find(country => country.id === id)?.name"
+                                                @change="query = $event.target.value"
+                                            />
+                                            <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                            </ComboboxButton>
+                                            <ComboboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                                <ComboboxOption
+                                                    v-for="country in filteredCountries"
+                                                    :key="country.id"
+                                                    :value="country.id"
+                                                    v-slot="{ selected, active }"
+                                                >
+                                                    <li :class="['relative cursor-default select-none py-2 pl-3 pr-9',
+                                                        active ? 'bg-indigo-600 text-white' : 'text-gray-900']">
+                                                        <span :class="['block truncate', selected && 'font-semibold']">
+                                                            {{ country.name }}
+                                                        </span>
+                                                    </li>
+                                                </ComboboxOption>
+                                            </ComboboxOptions>
+                                        </Combobox>
+                                    </div>
                                     <InputError :message="form.errors.country_of_origin" class="mt-2" />
                                 </div>
 
@@ -498,20 +548,33 @@
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import { XMarkIcon } from '@heroicons/vue/20/solid';
+import { 
+    Combobox,
+    ComboboxInput,
+    ComboboxButton,
+    ComboboxOptions,
+    ComboboxOption
+} from '@headlessui/vue';
+import { ChevronUpDownIcon } from '@heroicons/vue/20/solid';
 
 const props = defineProps({
     units: Object,
+    categories: Array,
     certifications: Array,
     processing_levels: Array,
     payment_terms: Array,
     delivery_terms: Array,
+    countries: {
+        type: Array,
+        required: true
+    }
 });
 
 const months = [
@@ -520,6 +583,7 @@ const months = [
 ];
 
 const form = useForm({
+    category_id: '',
     name: '',
     description: '',
     variety: '',
@@ -547,6 +611,28 @@ const form = useForm({
 });
 
 const previewImages = ref([]);
+
+const query = ref('');
+
+const filteredCategories = computed(() => {
+    return query.value === ''
+        ? props.categories
+        : props.categories.filter((category) =>
+            category.name
+                .toLowerCase()
+                .includes(query.value.toLowerCase())
+        );
+});
+
+const filteredCountries = computed(() => {
+    return query.value === ''
+        ? props.countries
+        : props.countries.filter((country) =>
+            country.name
+                .toLowerCase()
+                .includes(query.value.toLowerCase())
+        )
+});
 
 const handleFileSelect = (event) => {
     const files = Array.from(event.target.files);
